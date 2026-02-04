@@ -19,7 +19,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Create conda environment and install tools with pinned versions
-COPY environment.yml /tmp/environment.yml
+COPY containers/environment.yml /tmp/environment.yml
 RUN mamba env create -f /tmp/environment.yml && \
     mamba clean --all -f -y
 
