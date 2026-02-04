@@ -1,0 +1,71 @@
+# Nextflow
+.nextflow/
+.nextflow.log*
+work/
+results/
+timeline.html
+trace.txt
+dag.html
+report.html
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Reference data (downloaded by scripts)
+references/data/
+tests/smoke/ref/
+
+# Docker
+.dockerignore
+# Large sequencing files
+*.bam
+*.cram
+*.vcf.gz
+*.vcf.gz.tbi
+*.fastq.gz
+*.fq.gz
+*.sra
+*.tmp
+
+# Additional Nextflow patterns
+.nextflow.pid
+pipeline_info/
+multiqc_data/
