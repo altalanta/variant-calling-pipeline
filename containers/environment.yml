@@ -5,22 +5,22 @@ channels:
   - defaults
 dependencies:
   # Core system
-  - python=3.9
-  - pip=23.2
+  - python=3.11
+  - pip
 
   # Alignment tools
-  - bwa-mem2=2.2.1
-  - samtools=1.17
+  - bwa-mem2
+  - samtools
 
   # Variant calling
-  - gatk4=4.4.0.0
-  - bcftools=1.17
-  - tabix=1.17
+  - gatk4
+  - bcftools
+  - tabix
 
   # Quality control
-  - fastp=0.23.4
-  - fastqc=0.11.9
-  - multiqc=1.15
+  - fastp
+  - fastqc
+  - multiqc
 
   # Utilities
   - gzip
@@ -28,11 +28,11 @@ dependencies:
   - wget
 
   # Python packages
-  - pandas=2.0.3
-  - numpy=1.24.3
-  - pyyaml=6.0.1
-  - requests=2.31.0
+  - pandas
+  - numpy
+  - pyyaml
+  - requests
 
-  # Additional tools
-  - parallel=20230722
-  - pigz=2.6
+  # Additional tools  
+  - parallel
+  - pigz
