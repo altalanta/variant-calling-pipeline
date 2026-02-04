@@ -38,8 +38,13 @@ jobs:
 
       - name: Build Docker image
         run: |
-          cd containers
-          docker build -t variantcalling/pipeline:latest .
+          # Debug: show current directory and available files
+          pwd
+          ls -la
+          ls -la containers/
+          
+          # Build from root directory with containers/Dockerfile
+          docker build -t variantcalling/pipeline:latest -f containers/Dockerfile .
 
       - name: Set up test environment
         run: |
@@ -230,8 +235,7 @@ jobs:
       - name: Validate container definition
         run: |
           # Check that Dockerfile has valid syntax
-          cd containers
-          docker build --no-cache --progress=plain -t variantcalling/pipeline:test . > /dev/null
+          docker build --no-cache --progress=plain -t variantcalling/pipeline:test -f containers/Dockerfile . > /dev/null
           echo "Dockerfile validation passed!"
 
   docs:
