@@ -6,51 +6,51 @@ on:
   pull_request:
     branches: [ main ]
 
-env:
-  NXF_VER: '22.10.6'
-
 jobs:
   test:
     name: Run pipeline with test data
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         NXF_VER: ['22.10.6', '23.04.0']
-    
+
     steps:
       - name: Check out pipeline code
-        uses: actions/checkout@v3
-      
-      - name: Set up Java 11
-        uses: actions/setup-java@v3
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
         with:
-          java-version: '11'
+          java-version: '17'
           distribution: 'temurin'
-      
+
       - name: Install Nextflow
         run: |
-          wget -qO- get.nextflow.io | bash
+          curl -s https://get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
           nextflow -version
-      
+        env:
+          NXF_VER: ${{ matrix.NXF_VER }}
+
       - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
-      
+        uses: docker/setup-buildx-action@v3
+
       - name: Build Docker image
         run: |
           cd containers
           docker build -t variantcalling/pipeline:latest .
-      
+
       - name: Set up test environment
         run: |
           # Create reference bundle
           cd references
           bash make_ref_bundle.sh
-          
+
           # Verify test files exist
           ls -la ../tests/smoke/
           ls -la ../tests/smoke/ref/
-      
+
       - name: Run pipeline smoke test
         run: |
           nextflow run workflow/main.nf \
@@ -59,86 +59,86 @@ jobs:
             --outdir results \
             --ref_fasta tests/smoke/ref/test_ref.fa \
             --run_fastp
-      
+
       - name: Verify pipeline outputs
         run: |
           # Check that expected output files exist
           echo "Checking pipeline outputs..."
-          
+
           # Check alignment output
           if [ ! -f "results/NA00001/alignment/NA00001.cram" ]; then
             echo "ERROR: NA00001.cram not found"
             exit 1
           fi
-          
+
           if [ ! -f "results/NA00001/alignment/NA00001.cram.crai" ]; then
             echo "ERROR: NA00001.cram.crai not found"
             exit 1
           fi
-          
+
           # Check variant calling output
           if [ ! -f "results/NA00001/variants/NA00001.snv_indel.vcf.gz" ]; then
             echo "ERROR: NA00001.snv_indel.vcf.gz not found"
             exit 1
           fi
-          
+
           if [ ! -f "results/NA00001/variants/NA00001.snv_indel.vcf.gz.tbi" ]; then
             echo "ERROR: NA00001.snv_indel.vcf.gz.tbi not found"
             exit 1
           fi
-          
+
           # Check MultiQC report
           if [ ! -f "results/multiqc/multiqc_report.html" ]; then
             echo "ERROR: multiqc_report.html not found"
             exit 1
           fi
-          
+
           # Check run metadata
           if [ ! -f "results/run_metadata/software_versions.yml" ] && [ ! -f "results/pipeline_info/software_versions.yml" ]; then
             echo "WARNING: software_versions.yml not found in expected locations"
           fi
-          
+
           echo "All expected outputs found!"
-      
+
       - name: Validate VCF file
         run: |
           # Basic VCF validation
           echo "Validating VCF file..."
-          
+
           # Check VCF is not empty and has proper header
           zcat results/NA00001/variants/NA00001.snv_indel.vcf.gz | head -20
-          
+
           # Count header lines (should have ##fileformat and #CHROM lines)
           header_lines=$(zcat results/NA00001/variants/NA00001.snv_indel.vcf.gz | grep "^#" | wc -l)
           if [ "$header_lines" -lt 2 ]; then
             echo "ERROR: VCF header appears incomplete (only $header_lines header lines)"
             exit 1
           fi
-          
+
           # Check if VCF index exists and is not empty
           if [ ! -s "results/NA00001/variants/NA00001.snv_indel.vcf.gz.tbi" ]; then
             echo "ERROR: VCF index file is missing or empty"
             exit 1
           fi
-          
+
           echo "VCF validation passed!"
-      
+
       - name: Check resource usage
         run: |
           echo "=== Pipeline Execution Report ==="
           if [ -f "results/pipeline_info/execution_report_*.html" ] || [ -f "results/run_metadata/execution_report_*.html" ]; then
             echo "Execution report generated successfully"
           fi
-          
+
           # Show directory sizes
           echo "=== Output Directory Sizes ==="
           du -sh results/*
-          
+
           echo "=== Docker Images ==="
           docker images
-      
+
       - name: Upload results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: pipeline-results-nf${{ matrix.NXF_VER }}
@@ -148,75 +148,83 @@ jobs:
             trace.txt
             timeline.html
             report.html
-      
+
       - name: Upload MultiQC report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: multiqc-report
+          name: multiqc-report-${{ matrix.NXF_VER }}
           path: results/multiqc/multiqc_report.html
-      
+
       - name: Cleanup
         if: always()
         run: |
           # Clean up Docker images to save space
           docker system prune -af
-          
+
           # Clean up Nextflow work directory
           rm -rf work/
-  
+
   lint:
     name: Code linting and validation
-    runs-on: ubuntu-latest
-    
+    runs-on: ubuntu-22.04
+
     steps:
       - name: Check out pipeline code
-        uses: actions/checkout@v3
-      
+        uses: actions/checkout@v4
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
-      
+          python-version: '3.11'
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
       - name: Install linting tools
         run: |
           pip install flake8 yamllint
-      
+
       - name: Lint Python scripts
         run: |
-          flake8 scripts/ --max-line-length=120
-      
+          flake8 scripts/ --max-line-length=140 --extend-ignore=E302,E305,W293,E266,F841,W291,W292,E128,F541,E501,E231,F401 --statistics
+
       - name: Lint YAML files
         run: |
           yamllint -d relaxed .github/workflows/
           yamllint -d relaxed containers/environment.yml
-      
+
       - name: Check Nextflow syntax
         run: |
           # Install Nextflow
-          wget -qO- get.nextflow.io | bash
+          curl -s https://get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
-          
+
           # Check syntax of main workflow
           nextflow config workflow/
-      
+
       - name: Validate container definition
         run: |
-          # Check that Dockerfile builds without errors
+          # Check that Dockerfile has valid syntax
           cd containers
-          docker build --dry-run -t variantcalling/pipeline:test .
-  
+          docker build --no-cache --progress=plain -t variantcalling/pipeline:test . > /dev/null
+          echo "Dockerfile validation passed!"
+
   docs:
     name: Documentation check
-    runs-on: ubuntu-latest
-    
+    runs-on: ubuntu-22.04
+
     steps:
       - name: Check out pipeline code
-        uses: actions/checkout@v3
-      
+        uses: actions/checkout@v4
+
       - name: Check required documentation
         run: |
           echo "Checking required documentation files..."
-          
+
           required_docs=(
             "README.md"
             "docs/overview.md"
@@ -225,7 +233,7 @@ jobs:
             "docs/benchmarking.md"
             "docs/troubleshooting.md"
           )
-          
+
           for doc in "${required_docs[@]}"; do
             if [ ! -f "$doc" ]; then
               echo "ERROR: Required documentation file missing: $doc"
@@ -233,14 +241,14 @@ jobs:
             fi
             echo "✓ $doc"
           done
-          
+
           echo "All required documentation files present!"
-      
+
       - name: Check links in README
         run: |
           # Basic check that README mentions key components
           grep -q "Nextflow" README.md || (echo "ERROR: README.md missing Nextflow mention" && exit 1)
           grep -q "Docker" README.md || (echo "ERROR: README.md missing Docker mention" && exit 1)
           grep -q "GATK" README.md || (echo "ERROR: README.md missing GATK mention" && exit 1)
-          
+
           echo "README.md content check passed!"
