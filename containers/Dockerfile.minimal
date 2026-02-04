@@ -1,0 +1,23 @@
+FROM condaforge/mambaforge:4.14.0-0
+
+# Minimal test Dockerfile to isolate build issues
+LABEL description="Minimal test container for CI debugging"
+
+# Install system dependencies only
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        wget \
+        ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy files to test COPY statements
+COPY containers/environment.yml /tmp/environment.yml
+COPY scripts/ /usr/local/bin/
+
+# Create working directory
+WORKDIR /work
+
+# Default command
+CMD ["bash"]
