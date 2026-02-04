@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 
-def check_samplesheet(file_in, file_out):
+def check_samplesheet(file_in, file_out, base_dir=None):
     """
     This function checks that the samplesheet follows the following structure:
 
@@ -25,6 +25,10 @@ def check_samplesheet(file_in, file_out):
     valid_platforms = ["ILLUMINA", "PACBIO", "ONT", "IONTORRENT"]
 
     sample_mapping_dict = {}
+    if base_dir:
+        samplesheet_dir = Path(base_dir).resolve()
+    else:
+        samplesheet_dir = Path(file_in).resolve().parent
 
     with open(file_in) as fin:
         ## Check header
@@ -98,17 +102,25 @@ def check_samplesheet(file_in, file_out):
             # Check file accessibility
             if read1:
                 read1_path = Path(read1)
+                if not read1_path.is_absolute():
+                    read1_path = (samplesheet_dir / read1_path).resolve()
                 if not read1_path.exists():
                     print_error(f"read1 file does not exist: {read1}", "Line", line_num)
                 elif not read1_path.is_file():
                     print_error(f"read1 path is not a file: {read1}", "Line", line_num)
+            else:
+                read1_path = None
 
             if read2:
                 read2_path = Path(read2)
+                if not read2_path.is_absolute():
+                    read2_path = (samplesheet_dir / read2_path).resolve()
                 if not read2_path.exists():
                     print_error(f"read2 file does not exist: {read2}", "Line", line_num)
                 elif not read2_path.is_file():
                     print_error(f"read2 path is not a file: {read2}", "Line", line_num)
+            else:
+                read2_path = None
 
             # Validate optional fields
             platform = row.get("platform", "ILLUMINA").strip()
@@ -135,8 +147,8 @@ def check_samplesheet(file_in, file_out):
 
             ## Create sample mapping dictionary
             sample_mapping_dict[sample_id] = {
-                "read1": read1,
-                "read2": read2,
+                "read1": str(read1_path) if read1_path else "",
+                "read2": str(read2_path) if read2_path else "",
                 "platform": platform.upper(),
                 "library": library,
                 "lane": lane,
@@ -218,6 +230,13 @@ Examples:
         help="Skip checking if FASTQ files exist (for testing)",
     )
 
+    parser.add_argument(
+        "--base-dir",
+        dest="base_dir",
+        default=None,
+        help="Base directory to resolve relative FASTQ paths (defaults to the input samplesheet directory)",
+    )
+
     args = parser.parse_args()
 
     # Validate input file exists
@@ -236,7 +255,7 @@ Examples:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        check_samplesheet(args.file_in, args.file_out)
+        check_samplesheet(args.file_in, args.file_out, args.base_dir)
         print("Samplesheet validation completed successfully!", file=sys.stderr)
     except Exception as e:
         print_error(f"Samplesheet validation failed: {e}", "", "")

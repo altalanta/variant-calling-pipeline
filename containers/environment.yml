@@ -33,6 +33,6 @@ dependencies:
   - pyyaml
   - requests
 
-  # Additional tools  
+  # Additional tools
   - parallel
   - pigz

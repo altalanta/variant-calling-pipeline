@@ -48,16 +48,28 @@ jobs:
 
       - name: Set up test environment
         run: |
-          # Create reference bundle
-          cd references
-          bash make_ref_bundle.sh
+          set -euxo pipefail
+
+          echo "Inspecting repository root"
+          pwd
+          ls -la
+          ls -la references || true
+          ls -la tests/smoke || true
+
+          # Create reference bundle from repository root to avoid relative path issues
+          bash references/make_ref_bundle.sh
 
           # Verify test files exist
-          ls -la ../tests/smoke/
-          ls -la ../tests/smoke/ref/
+          ls -la tests/smoke/
+          ls -la tests/smoke/ref/
 
           # Assert reference file exists
-          test -f tests/smoke/ref/ref.fasta || (echo "ERROR: Reference file tests/smoke/ref/ref.fasta not found" && exit 1)
+          if [ ! -f tests/smoke/ref/ref.fasta ]; then
+            echo "ERROR: Reference file tests/smoke/ref/ref.fasta not found"
+            echo "Contents of tests/smoke/ref:"
+            find tests/smoke/ref -maxdepth 1 -type f -print
+            exit 1
+          fi
           echo "✓ Reference file found: tests/smoke/ref/ref.fasta"
 
       - name: Run pipeline smoke test

@@ -8,19 +8,19 @@ process JOINT_GENOTYPE {
         'variantcalling/pipeline:latest' }"
 
     input:
-    path(gvcf_files)
-    path(ref_fasta)
+        val(gvcf_files)
+        path(ref_fasta)
 
     output:
-    path("joint_genotyped.vcf.gz"), path("joint_genotyped.vcf.gz.tbi"), emit: vcf
-    path "versions.yml"                                               , emit: versions
+        tuple val('joint'), path("joint_genotyped.vcf.gz"), path("joint_genotyped.vcf.gz.tbi"), emit: vcf
+        path "versions.yml"                                                               , emit: versions
 
     when:
-    task.ext.when == null || task.ext.when
+        task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def gvcf_list = gvcf_files.collect { "-V $it" }.join(' ')
+        def args = task.ext.args ?: ''
+        def gvcf_list = gvcf_files.collect { "-V $it" }.join(' ')
     
     """
     # Create genomics database

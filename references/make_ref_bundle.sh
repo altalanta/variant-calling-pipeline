@@ -6,16 +6,22 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
 # Configuration
-REF_DIR="../tests/smoke/ref"
+REF_DIR="${REPO_ROOT}/tests/smoke/ref"
 REF_NAME="ref"
 REF_SIZE=1000  # 1kb reference for fast testing
 
 echo "Creating minimal reference bundle in ${REF_DIR}..."
 
-# Create output directory
+# Create output directory and ensure reruns start clean
 mkdir -p "${REF_DIR}"
 cd "${REF_DIR}"
+rm -f ${REF_NAME}.fasta ${REF_NAME}.fasta.* ${REF_NAME}.dict \
+      known_sites.vcf known_sites.vcf.gz known_sites.vcf.gz.tbi \
+      targets.bed
 
 # Generate synthetic reference sequence
 echo "Generating synthetic reference sequence..."
