@@ -8,7 +8,7 @@ set -euo pipefail
 
 # Configuration
 REF_DIR="../tests/smoke/ref"
-REF_NAME="test_ref"
+REF_NAME="ref"
 REF_SIZE=1000  # 1kb reference for fast testing
 
 echo "Creating minimal reference bundle in ${REF_DIR}..."
@@ -19,7 +19,7 @@ cd "${REF_DIR}"
 
 # Generate synthetic reference sequence
 echo "Generating synthetic reference sequence..."
-cat > ${REF_NAME}.fa << 'EOF'
+cat > ${REF_NAME}.fasta << 'EOF'
 >chr1
 ATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCG
 ATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCG
@@ -42,10 +42,10 @@ echo "Creating reference indices..."
 
 # Create FASTA index
 if command -v samtools &> /dev/null; then
-    samtools faidx ${REF_NAME}.fa
+    samtools faidx ${REF_NAME}.fasta
 else
     # Fallback: create simple index manually
-    echo -e "chr1\t1000\t6\t70\t71" > ${REF_NAME}.fa.fai
+    echo -e "chr1\t1000\t6\t70\t71" > ${REF_NAME}.fasta.fai
 fi
 
 # Create sequence dictionary for GATK compatibility
@@ -55,21 +55,21 @@ cat > ${REF_NAME}.dict << 'EOF'
 EOF
 
 # Create BWA-MEM2 indices (simplified for testing)
-# Note: In real usage, you would run: bwa-mem2 index ${REF_NAME}.fa
+# Note: In real usage, you would run: bwa-mem2 index ${REF_NAME}.fasta
 
 # Create dummy BWA-MEM2 index files for CI compatibility
-touch ${REF_NAME}.fa.0123
-touch ${REF_NAME}.fa.amb
-touch ${REF_NAME}.fa.ann
-touch ${REF_NAME}.fa.bwt.2bit.64
-touch ${REF_NAME}.fa.pac
+touch ${REF_NAME}.fasta.0123
+touch ${REF_NAME}.fasta.amb
+touch ${REF_NAME}.fasta.ann
+touch ${REF_NAME}.fasta.bwt.2bit.64
+touch ${REF_NAME}.fasta.pac
 
 echo "Creating synthetic known sites VCF..."
 
 # Create minimal known sites VCF for BQSR testing
 cat > known_sites.vcf << 'EOF'
 ##fileformat=VCFv4.2
-##reference=test_ref.fa
+##reference=ref.fasta
 ##contig=<ID=chr1,length=1000>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
 chr1	100	rs1	A	T	100	PASS	.
@@ -100,8 +100,8 @@ EOF
 echo "Reference bundle created successfully!"
 echo ""
 echo "Files created:"
-echo "  - ${REF_NAME}.fa (reference FASTA)"
-echo "  - ${REF_NAME}.fa.fai (FASTA index)"
+echo "  - ${REF_NAME}.fasta (reference FASTA)"
+echo "  - ${REF_NAME}.fasta.fai (FASTA index)"
 echo "  - ${REF_NAME}.dict (sequence dictionary)"
 echo "  - BWA-MEM2 index files"
 echo "  - known_sites.vcf.gz (synthetic known variants)"
@@ -111,4 +111,4 @@ echo "Usage:"
 echo "  nextflow run workflow/main.nf \\"
 echo "    --input tests/smoke/samplesheet.csv \\"
 echo "    --outdir results \\"
-echo "    --ref_fasta tests/smoke/ref/${REF_NAME}.fa"
+echo "    --ref_fasta tests/smoke/ref/${REF_NAME}.fasta"

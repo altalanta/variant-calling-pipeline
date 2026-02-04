@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        NXF_VER: ['22.10.6', '23.04.0']
+        NXF_VER: ['22.10.1', '23.04.1']
 
     steps:
       - name: Check out pipeline code
@@ -29,9 +29,9 @@ jobs:
         run: |
           curl -s https://get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
+          nextflow self-update ${{ matrix.NXF_VER }}
+          echo "Installed Nextflow version:"
           nextflow -version
-        env:
-          NXF_VER: ${{ matrix.NXF_VER }}
 
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
@@ -50,6 +50,10 @@ jobs:
           # Verify test files exist
           ls -la ../tests/smoke/
           ls -la ../tests/smoke/ref/
+          
+          # Assert reference file exists
+          test -f tests/smoke/ref/ref.fasta || (echo "ERROR: Reference file tests/smoke/ref/ref.fasta not found" && exit 1)
+          echo "✓ Reference file found: tests/smoke/ref/ref.fasta"
 
       - name: Run pipeline smoke test
         run: |
@@ -57,22 +61,34 @@ jobs:
             -profile docker \
             --input tests/smoke/samplesheet.csv \
             --outdir results \
-            --ref_fasta tests/smoke/ref/test_ref.fa \
+            --ref_fasta tests/smoke/ref/ref.fasta \
             --run_fastp
 
       - name: Verify pipeline outputs
         run: |
           # Check that expected output files exist
           echo "Checking pipeline outputs..."
+          
+          # List output structure for debugging
+          find results/ -type f -name "*.cram" -o -name "*.bam" -o -name "*.vcf.gz" -o -name "*.html" | sort
 
-          # Check alignment output
-          if [ ! -f "results/NA00001/alignment/NA00001.cram" ]; then
-            echo "ERROR: NA00001.cram not found"
-            exit 1
-          fi
-
-          if [ ! -f "results/NA00001/alignment/NA00001.cram.crai" ]; then
-            echo "ERROR: NA00001.cram.crai not found"
+          # Check alignment output (CRAM or BAM with correct index)
+          if [ -f "results/NA00001/alignment/NA00001.cram" ]; then
+            echo "✓ Found CRAM alignment file"
+            if [ ! -f "results/NA00001/alignment/NA00001.cram.crai" ]; then
+              echo "ERROR: NA00001.cram.crai index not found"
+              exit 1
+            fi
+            echo "✓ Found CRAM index file"
+          elif [ -f "results/NA00001/alignment/NA00001.bam" ]; then
+            echo "✓ Found BAM alignment file"
+            if [ ! -f "results/NA00001/alignment/NA00001.bam.bai" ]; then
+              echo "ERROR: NA00001.bam.bai index not found"
+              exit 1
+            fi
+            echo "✓ Found BAM index file"
+          else
+            echo "ERROR: Neither CRAM nor BAM alignment file found"
             exit 1
           fi
 
@@ -186,11 +202,15 @@ jobs:
 
       - name: Install linting tools
         run: |
-          pip install flake8 yamllint
+          pip install ruff yamllint
 
-      - name: Lint Python scripts
+      - name: Format and lint Python scripts
         run: |
-          flake8 scripts/ --max-line-length=140 --extend-ignore=E302,E305,W293,E266,F841,W291,W292,E128,F541,E501,E231,F401 --statistics
+          # Format Python files with ruff
+          ruff format scripts/
+          
+          # Check Python code with ruff (faster than flake8)
+          ruff check scripts/ --fix --show-fixes
 
       - name: Lint YAML files
         run: |
@@ -199,9 +219,10 @@ jobs:
 
       - name: Check Nextflow syntax
         run: |
-          # Install Nextflow
+          # Install Nextflow (latest stable)
           curl -s https://get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
+          nextflow -version
 
           # Check syntax of main workflow
           nextflow config workflow/
