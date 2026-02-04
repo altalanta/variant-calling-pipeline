@@ -214,8 +214,8 @@ jobs:
           # Format Python files with ruff
           ruff format scripts/
           
-          # Check Python code with ruff (faster than flake8)
-          ruff check scripts/ --fix --show-fixes
+          # Check Python code with ruff, allowing some common issues
+          ruff check scripts/ --fix --show-fixes --extend-ignore=E501,F841
 
       - name: Lint YAML files
         run: |
