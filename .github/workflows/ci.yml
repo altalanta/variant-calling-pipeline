@@ -42,7 +42,7 @@ jobs:
           pwd
           ls -la
           ls -la containers/
-          
+
           # Build from root directory with containers/Dockerfile
           docker build -t variantcalling/pipeline:latest -f containers/Dockerfile .
 
@@ -55,7 +55,7 @@ jobs:
           # Verify test files exist
           ls -la ../tests/smoke/
           ls -la ../tests/smoke/ref/
-          
+
           # Assert reference file exists
           test -f tests/smoke/ref/ref.fasta || (echo "ERROR: Reference file tests/smoke/ref/ref.fasta not found" && exit 1)
           echo "✓ Reference file found: tests/smoke/ref/ref.fasta"
@@ -73,7 +73,7 @@ jobs:
         run: |
           # Check that expected output files exist
           echo "Checking pipeline outputs..."
-          
+
           # List output structure for debugging
           find results/ -type f -name "*.cram" -o -name "*.bam" -o -name "*.vcf.gz" -o -name "*.html" | sort
 
@@ -213,7 +213,7 @@ jobs:
         run: |
           # Format Python files with ruff
           ruff format scripts/
-          
+
           # Check Python code with ruff, allowing some common issues
           ruff check scripts/ --fix --show-fixes --extend-ignore=E501,F841
 
