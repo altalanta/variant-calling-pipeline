@@ -1,0 +1,4 @@
+sample_id,read1,read2,platform,library,lane
+NA12878,/path/to/data/NA12878_R1.fastq.gz,/path/to/data/NA12878_R2.fastq.gz,ILLUMINA,WGS_lib1,001
+NA24385,/path/to/data/NA24385_R1.fastq.gz,/path/to/data/NA24385_R2.fastq.gz,ILLUMINA,WGS_lib2,002
+HG00096,/path/to/data/HG00096_R1.fastq.gz,/path/to/data/HG00096_R2.fastq.gz,ILLUMINA,WES_lib1,001

@@ -1,0 +1,40 @@
+# Tool versions used in variant calling pipeline
+# This file locks specific versions of all tools used in the pipeline
+
+# Core bioinformatics tools
+bwa-mem2=2.2.1
+samtools=1.17
+gatk4=4.4.0.0
+bcftools=1.17
+tabix=1.17
+
+# Quality control tools
+fastp=0.23.4
+fastqc=0.11.9
+multiqc=1.15
+
+# System dependencies
+python=3.9
+pip=23.2
+conda=23.7.4
+mamba=1.5.1
+
+# Python packages
+pandas=2.0.3
+numpy=1.24.3
+pyyaml=6.0.1
+requests=2.31.0
+
+# Utilities
+parallel=20230722
+pigz=2.6
+gzip=1.12
+curl=8.2.1
+wget=1.21.4
+
+# Container base
+condaforge/mambaforge=4.14.0-0
+
+# Versions verified on: 2024-02-04
+# Container build: variantcalling/pipeline:latest
+# Pipeline version: 1.0.0

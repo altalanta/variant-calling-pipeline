@@ -1,0 +1,38 @@
+name: variantcalling
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # Core system
+  - python=3.9
+  - pip=23.2
+  
+  # Alignment tools
+  - bwa-mem2=2.2.1
+  - samtools=1.17
+  
+  # Variant calling
+  - gatk4=4.4.0.0
+  - bcftools=1.17
+  - tabix=1.17
+  
+  # Quality control
+  - fastp=0.23.4
+  - fastqc=0.11.9
+  - multiqc=1.15
+  
+  # Utilities
+  - gzip
+  - curl
+  - wget
+  
+  # Python packages
+  - pandas=2.0.3
+  - numpy=1.24.3
+  - pyyaml=6.0.1
+  - requests=2.31.0
+  
+  # Additional tools
+  - parallel=20230722
+  - pigz=2.6

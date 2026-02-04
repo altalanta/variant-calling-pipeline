@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Variant Calling Pipeline"
+version: 1.0.0
+date-released: 2024-02-04
+url: "https://github.com/your-org/variant-calling-pipeline"
+repository-code: "https://github.com/your-org/variant-calling-pipeline"
+license: MIT
+authors:
+  - family-names: "Developer"
+    given-names: "Pipeline"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+abstract: "A complete, containerized bioinformatics pipeline for germline variant calling from paired-end FASTQ files to annotated VCF files using GATK4 best practices."
+keywords:
+  - bioinformatics
+  - variant-calling
+  - genomics
+  - nextflow
+  - gatk
+  - docker

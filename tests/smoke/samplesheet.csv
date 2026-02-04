@@ -1,0 +1,2 @@
+sample_id,read1,read2,platform,library,lane
+NA00001,tests/smoke/tiny_reads_1.fq.gz,tests/smoke/tiny_reads_2.fq.gz,ILLUMINA,WGS_lib1,1

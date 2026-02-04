@@ -1,0 +1,145 @@
+title: "Variant Calling Pipeline Report"
+subtitle: "Generated with Nextflow"
+
+intro_text: |
+    This report presents quality control metrics for the variant calling pipeline.
+    The pipeline processes paired-end sequencing data through alignment, variant calling, 
+    and quality filtering to produce high-quality variant calls.
+
+report_comment: |
+    This report was generated using MultiQC v1.15 as part of the variant calling pipeline.
+    For more information about this pipeline, visit: https://github.com/your-org/variant-calling-pipeline
+
+show_analysis_paths: false
+show_analysis_time: true
+
+# Module order
+module_order:
+    - fastqc:
+        name: 'FastQC (Raw)'
+        anchor: 'fastqc_raw'
+        target: 'fastqc'
+        path_filters:
+            - '*_fastqc.zip'
+    - fastp:
+        name: 'FastP (Trimming)'
+        anchor: 'fastp'
+    - samtools:
+        name: 'SAMtools Stats'
+        anchor: 'samtools'
+    - picard:
+        name: 'Picard MarkDuplicates'
+        anchor: 'picard_markduplicates'
+        path_filters:
+            - '*markdup.metrics.txt'
+    - gatk:
+        name: 'GATK Metrics'
+        anchor: 'gatk'
+    - bcftools:
+        name: 'BCFtools Stats'
+        anchor: 'bcftools'
+    - custom_content
+
+# Remove some sections we don't need
+remove_sections:
+    - fastqc_sequence_counts
+    - fastqc_sequence_duplication_levels
+
+# Sample name cleaning
+sample_names_ignore:
+    - '.sorted'
+    - '.markdup'
+    - '.recal'
+    - '_fastp'
+    - '_fastqc'
+
+sample_names_rename:
+    - type: 'regex'
+      pattern: '(.+)\.markdup'
+      replacement: '\1'
+    - type: 'regex'  
+      pattern: '(.+)_R[12]'
+      replacement: '\1'
+
+# Custom content for pipeline summary
+custom_data:
+    pipeline_summary:
+        file_format: 'yaml'
+        section_name: 'Pipeline Summary'
+        description: 'Summary of pipeline execution and parameters'
+        plot_type: 'table'
+        pconfig:
+            namespace: 'Pipeline'
+            title: 'Pipeline Execution Summary'
+
+# Table configurations
+table_columns_visible:
+    FastQC:
+        percent_gc: true
+        avg_sequence_length: true
+        percent_duplicates: true
+        total_sequences: true
+    FastP:
+        after_filtering_q30_rate: true
+        after_filtering_gc_content: true
+        filtering_result_passed_filter_reads: true
+        duplication_rate: true
+    SAMtools:
+        error_rate: false
+        non_primary_alignments: false
+        reads_mapped_percent: true
+        reads_properly_paired_percent: true
+        average_length: true
+        average_quality: true
+    Picard:
+        PERCENT_DUPLICATION: true
+        ESTIMATED_LIBRARY_SIZE: true
+
+# File search patterns
+sp:
+    fastp:
+        fn: '*.fastp.json'
+    picard/markdups:
+        fn: '*.markdup.metrics.txt'
+        shared: true
+    samtools/stats:
+        fn: '*.stats.txt'
+        shared: true
+
+# Report customization
+extra_fn_clean_exts:
+    - '.markdup'
+    - '.sorted' 
+    - '.recal'
+    - '_fastp'
+
+# Colors and styling
+colors:
+    - '#1f77b4'  # Blue
+    - '#ff7f0e'  # Orange  
+    - '#2ca02c'  # Green
+    - '#d62728'  # Red
+    - '#9467bd'  # Purple
+    - '#8c564b'  # Brown
+    - '#e377c2'  # Pink
+    - '#7f7f7f'  # Gray
+    - '#bcbd22'  # Olive
+    - '#17becf'  # Cyan
+
+# Disable some modules we don't use
+disable_version_detection: true
+
+# Export settings
+export_plots: true
+plots_force_flat: false
+plots_force_interactive: false
+
+# File size limits
+log_filesize_limit: 5000000
+data_dump_file: false
+
+# Footer
+report_header_info:
+    - Contact: 'pipeline-support@example.com'
+    - Pipeline: 'Variant Calling Pipeline v1.0.0'
+    - Documentation: 'https://github.com/your-org/variant-calling-pipeline/docs'
