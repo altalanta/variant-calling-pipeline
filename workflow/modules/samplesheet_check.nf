@@ -22,7 +22,7 @@ process SAMPLESHEET_CHECK {
     python ${projectDir}/../scripts/check_samplesheet.py \\
         $samplesheet \\
         samplesheet.valid.csv \\
-        --base-dir ${workflow.launchDir}
+        --base-dir ${projectDir}/..
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
