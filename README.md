@@ -33,6 +33,15 @@ nextflow run workflow/main.nf \
 - **8+ GB RAM** recommended
 - **Reference genome** and indices (see [references documentation](docs/references.md))
 
+## Entropy-Augmented Variant Discovery
+
+Beyond the standard GATK best-practice workflow, the pipeline now emits an entropy-aware variant layer designed to surface variants missed by conventional haplotype assembly. Each sample automatically runs:
+
+1. **Complex region detection** — Sliding windows (configurable via `--entropy_window_size`/`--entropy_window_step`) quantify mismatch/indel densities, soft-clip burden, and base/CIGAR entropies to flag difficult loci.
+2. **Local read re-assembly** — Reads spanning flagged windows are reassembled with a lightweight De Bruijn graph (`--entropy_kmer`, `--entropy_max_contigs`) to recover complex indels, MNVs, and micro-variants.
+3. **Entropy-weighted scoring** — Read-level allele balance, base qualities, MAPQ, entropy z-scores, and assembly support feed a configurable linear score (`--entropy_weight_*`) to classify calls into baseline-supported, entropy-supported novel, or low-confidence categories.
+4. **Reporting** — Three VCFs (baseline copy, augmented, novel-only) plus a JSON summary (Ti/Tv, indel spectra, region densities, overlap statistics) are written under `variants/entropy/` for downstream benchmarking.
+
 ## Command Examples
 
 ### Basic run with test data
@@ -108,7 +117,13 @@ results/
 │   │   └── {sample_id}.cram.crai      # CRAM index
 │   ├── variants/
 │   │   ├── {sample_id}.snv_indel.vcf.gz    # Filtered variants
-│   │   └── {sample_id}.snv_indel.vcf.gz.tbi # VCF index
+│   │   ├── {sample_id}.snv_indel.vcf.gz.tbi # VCF index
+│   │   └── entropy/
+│   │       ├── {sample_id}.entropy.baseline.vcf.gz
+│   │       ├── {sample_id}.entropy.augmented_variants.vcf.gz
+│   │       ├── {sample_id}.entropy.novel_entropy_variants.vcf.gz
+│   │       ├── {sample_id}.entropy.low_confidence_variants.vcf.gz
+│   │       └── {sample_id}.entropy.entropy_summary.json
 │   └── qc/
 │       └── {sample_id}_fastqc.html
 ├── multiqc/

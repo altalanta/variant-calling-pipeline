@@ -33,6 +33,11 @@ jobs:
           echo "Installed Nextflow version:"
           nextflow -version
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
@@ -59,9 +64,47 @@ jobs:
           # Create reference bundle from repository root to avoid relative path issues
           bash references/make_ref_bundle.sh
 
+          # Generate test FASTQ files
+          echo "Generating test FASTQ files..."
+          python scripts/generate_test_reads.py --output-dir tests/smoke --num-reads 100
+          echo "✓ Test FASTQ files generated"
+
           # Verify test files exist
           ls -la tests/smoke/
           ls -la tests/smoke/ref/
+
+          # Debug: Check for the specific FASTQ files mentioned in samplesheet
+          echo "=== CHECKING SAMPLESHEET FILES ==="
+          if [ -f "tests/smoke/samplesheet.csv" ]; then
+            echo "Samplesheet contents:"
+            cat tests/smoke/samplesheet.csv
+            echo ""
+            echo "Checking FASTQ files from samplesheet:"
+            # Extract FASTQ file paths and check if they exist
+            tail -n +2 tests/smoke/samplesheet.csv | cut -d',' -f3,4 | while IFS=',' read read1 read2; do
+              echo "Checking: $read1"
+              if [ -f "$read1" ]; then
+                echo "  ✓ Found: $read1"
+                ls -la "$read1"
+              else
+                echo "  ✗ Missing: $read1"
+                echo "  Looking for files matching pattern:"
+                find tests/smoke -name "$(basename "$read1")" -type f 2>/dev/null || echo "    No matches found"
+              fi
+              echo "Checking: $read2"
+              if [ -f "$read2" ]; then
+                echo "  ✓ Found: $read2"
+                ls -la "$read2"
+              else
+                echo "  ✗ Missing: $read2"
+                echo "  Looking for files matching pattern:"
+                find tests/smoke -name "$(basename "$read2")" -type f 2>/dev/null || echo "    No matches found"
+              fi
+            done
+          else
+            echo "ERROR: Samplesheet not found at tests/smoke/samplesheet.csv"
+            exit 1
+          fi
 
           # Assert reference file exists
           if [ ! -f tests/smoke/ref/ref.fasta ]; then

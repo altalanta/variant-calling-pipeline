@@ -58,6 +58,7 @@ include { BQSR              } from './modules/bqsr'
 include { CALL_GATK_HC      } from './modules/call_gatk_hc'
 include { JOINT_GENOTYPE    } from './modules/joint_genotype'
 include { FILTER_ANNOTATE   } from './modules/filter_annotate'
+include { ENTROPY_AUGMENT   } from './modules/entropy_augment'
 include { MULTIQC           } from './modules/multiqc'
 
 /*
@@ -166,6 +167,26 @@ workflow {
         ch_ref_fasta
     )
     ch_versions = ch_versions.mix(FILTER_ANNOTATE.out.versions.first())
+
+    //
+    // MODULE: Entropy-aware variant augmentation
+    //
+    if (params.run_entropy_augment) {
+        ch_entropy_ready = ch_bam_final
+            .map { meta, bam, bai -> [ meta.sample_id, [meta, bam, bai] ] }
+            .join(
+                FILTER_ANNOTATE.out.vcf.map { meta, vcf, tbi -> [ meta.sample_id, [meta, vcf, tbi] ] }
+            )
+            .map { sid, bam_entry, vcf_entry ->
+                [ bam_entry[0], bam_entry[1], bam_entry[2], vcf_entry[1], vcf_entry[2] ]
+            }
+
+        ENTROPY_AUGMENT (
+            ch_entropy_ready,
+            ch_ref_fasta
+        )
+        ch_versions = ch_versions.mix(ENTROPY_AUGMENT.out.versions.first())
+    }
 
     //
     // Collect versions and create software versions file

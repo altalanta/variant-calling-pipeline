@@ -43,7 +43,13 @@ The pipeline implements the following main steps:
 - **BCFtools norm**: Variant normalization and multiallelic splitting
 - Outputs filtered VCF with quality annotations
 
-### 8. Quality Control Reporting
+### 8. Entropy-Augmented Variant Discovery
+- **Complexity scanning**: Sliding windows quantify mismatch/indel density, soft clipping, and CIGAR/base-call entropy to flag problematic loci.
+- **Local assembly**: Lightweight De Bruijn graphs reconstruct contigs within flagged windows to expose complex indels, MNVs, and 20–200 bp micro-variants.
+- **Composite scoring**: Allele balance, base quality, MAPQ, entropy z-score, and assembly support contribute to a configurable score that labels baseline, entropy-supported, and low-confidence calls.
+- **Reporting**: Baseline copies, augmented VCFs, novel-only calls, low-confidence calls, and a JSON summary (Ti/Tv, indel spectra, region density comparisons) appear under `results/<sample>/variants/entropy/`.
+
+### 9. Quality Control Reporting
 - **MultiQC**: Aggregates QC metrics across all pipeline steps
 - Generates comprehensive HTML report
 
