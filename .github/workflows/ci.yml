@@ -74,12 +74,100 @@ jobs:
 
       - name: Run pipeline smoke test
         run: |
+          set +e  # Don't exit on failure - we want to capture logs
+          
+          # Set Nextflow environment for better logging
+          export NXF_ANSI_LOG=false
+          export NXF_OPTS='-Xmx4g'
+          
+          echo "Starting Nextflow pipeline with verbose logging..."
           nextflow run workflow/main.nf \
             -profile docker \
             --input tests/smoke/samplesheet.csv \
             --outdir results \
             --ref_fasta tests/smoke/ref/ref.fasta \
-            --run_fastp
+            --run_fastp \
+            -with-trace trace.txt \
+            -with-report report.html \
+            -with-timeline timeline.html \
+            -with-dag flowchart.png
+          
+          # Capture the exit status
+          EXIT_STATUS=$?
+          echo "Nextflow exit status: $EXIT_STATUS"
+          
+          # Always show the main Nextflow log
+          echo "=== MAIN NEXTFLOW LOG ==="
+          if [ -f .nextflow.log ]; then
+            tail -100 .nextflow.log
+          else
+            echo "No .nextflow.log found"
+          fi
+          
+          # Exit with the same status as Nextflow
+          exit $EXIT_STATUS
+
+      - name: Dump Nextflow failure logs
+        if: failure()
+        run: |
+          echo "=== NEXTFLOW FAILURE ANALYSIS ==="
+          
+          # Show Nextflow version and config
+          nextflow -version || true
+          echo "=== NEXTFLOW CONFIG ==="
+          nextflow config workflow/ || true
+          
+          # Show the complete Nextflow log
+          echo "=== COMPLETE NEXTFLOW LOG ==="
+          if [ -f .nextflow.log ]; then
+            cat .nextflow.log
+          else
+            echo "No .nextflow.log found"
+          fi
+          
+          # Show trace file if it exists
+          echo "=== TASK TRACE ==="
+          if [ -f trace.txt ]; then
+            cat trace.txt
+          else
+            echo "No trace.txt found"
+          fi
+          
+          # Look for specific task failure logs in work directory
+          echo "=== WORK DIRECTORY STRUCTURE ==="
+          if [ -d work ]; then
+            find work -name "*.log" -o -name ".command.log" -o -name ".command.err" | head -20
+            
+            echo "=== FAILED TASK LOGS ==="
+            # Find and show logs from failed tasks
+            for logfile in $(find work -name ".command.log" | head -10); do
+              echo "--- Log: $logfile ---"
+              cat "$logfile" 2>/dev/null || echo "Could not read $logfile"
+            done
+            
+            echo "=== FAILED TASK ERROR LOGS ==="
+            # Find and show error logs from failed tasks
+            for errfile in $(find work -name ".command.err" | head -10); do
+              echo "--- Error log: $errfile ---"
+              cat "$errfile" 2>/dev/null || echo "Could not read $errfile"
+            done
+          else
+            echo "No work directory found"
+          fi
+          
+          # Show Docker status
+          echo "=== DOCKER STATUS ==="
+          docker ps -a || true
+          docker images | grep variantcalling || true
+          
+          # Show available disk space
+          echo "=== DISK SPACE ==="
+          df -h
+          
+          # Show system resources
+          echo "=== SYSTEM RESOURCES ==="
+          free -h
+          ps aux | head -20
 
       - name: Verify pipeline outputs
         run: |
@@ -170,7 +258,7 @@ jobs:
           echo "=== Docker Images ==="
           docker images
 
-      - name: Upload results
+      - name: Upload results and logs
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -181,7 +269,24 @@ jobs:
             trace.txt
             timeline.html
             report.html
+            flowchart.png
+            work/**/.command.log
+            work/**/.command.err
+            work/**/.command.sh
+            work/**/.exitcode
 
+      - name: Upload failure logs
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failure-logs-nf${{ matrix.NXF_VER }}
+          path: |
+            .nextflow.log
+            trace.txt
+            work/**/.command.log
+            work/**/.command.err
+            work/**/.exitcode
+            
       - name: Upload MultiQC report
         uses: actions/upload-artifact@v4
         if: always()
