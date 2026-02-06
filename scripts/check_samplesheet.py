@@ -99,28 +99,11 @@ def check_samplesheet(file_in, file_out, base_dir=None):
                     line_num,
                 )
 
-            # Check file accessibility
-            if read1:
-                read1_path = Path(read1)
-                if not read1_path.is_absolute():
-                    read1_path = (samplesheet_dir / read1_path).resolve()
-                if not read1_path.exists():
-                    print_error(f"read1 file does not exist: {read1}", "Line", line_num)
-                elif not read1_path.is_file():
-                    print_error(f"read1 path is not a file: {read1}", "Line", line_num)
-            else:
-                read1_path = None
-
-            if read2:
-                read2_path = Path(read2)
-                if not read2_path.is_absolute():
-                    read2_path = (samplesheet_dir / read2_path).resolve()
-                if not read2_path.exists():
-                    print_error(f"read2 file does not exist: {read2}", "Line", line_num)
-                elif not read2_path.is_file():
-                    print_error(f"read2 path is not a file: {read2}", "Line", line_num)
-            else:
-                read2_path = None
+            # File accessibility will be checked later by Nextflow
+            # when the actual files are accessed, so we skip the existence
+            # check here to avoid container mount issues
+            read1_path = Path(read1) if read1 else None
+            read2_path = Path(read2) if read2 else None
 
             # Validate optional fields
             platform = row.get("platform", "ILLUMINA").strip()
